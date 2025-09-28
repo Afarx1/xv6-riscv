@@ -1,27 +1,45 @@
-# INFORME.MD
+# INFORME TAREA 1
 
-## Instalación de xv6
+## Funcionamiento de llamadas al sistema
 
-1. Clonamos el repositorio desde GitHub: https://github.com/Afarx1/xv6-riscv.git
+### - getppid(void)
+Retorna la ID del proceso padre del proceso que lo invoca.
+### - getancestor(int)
+Retorna la ID del proceso indicado en el parámetro.
 
-2. Instalamos dependencias necesarias: sudo apt install make/qemu-system-misc/bc/gcc-riscv62-linux-gnu
+getancestor(0): retorna el mismo proceso.
+getancestor(1): retorna el padre.
+getancestor(2): retorna el abuelo.
+Si el parámetro no es válido, retorna -1.
 
-3. Verificamos la versión de QEMU (necesaria >= 7.2)
+## Modificaciones realizadas
+- En /kernel/sysproc.c se agregaron las funcionalidades de las llamadas al sistema getppid(void) y getancestor(int).
+- En /kernel/syscall.h se definieron los números de syscall para las nuevas llamadas al sistema.
+- En /kernel/syscall.c se declararon y registraron las nuevas llamadas.
 
-4. Se ejecutó 'make qemu' y el sistema xv6 se inició correctamente
+- En /user/user.h se agregaron las nuevas llamadas.
+- En /user/usys.pl se agregaron las nuevas llamadas.
+- Se creó yosoytupadre.c en /user.
+- Se agregó yosoytupadre.c a MAKEFILE.
 
-## Problemas encontrados
+## Dificultades y resolución
+1.
+```kernel/sysproc.c: In function ‘sys_getancestor’:
+kernel/sysproc.c:115:6: error: void value not ignored as it ought to be
+  115 |   if(argint(0, &n) < 0)
+      |      ^~~~~
+make: *** [<builtin>: kernel/sysproc.o] Error 1```
+Resolución: En xv6-riscv, la función argint no retorna nada (void), sino que escribe directamente en la variable. Por lo tanto, el compilador retorna “void value not ignored as it ought to be”.
 
-- Error: `fatal: destination path 'xv6-riscv' already exists`
-- Fix: eliminar o acceder al directorio existente
-
-- Error: `ERROR: Need qemu version >= 7.2`
-- Fix: ctualizar Ubuntu y reinstalar QEMU manualmente
-
-- Error: `make: gcc: No such file or directory`
-- Fix:  instalar `build-essential`
-
-## Confirmación
-
-xv6 está funcionando correctamente. Se puede compilar y ejecutar con `make qemu`.
-
+2.
+```$ yosoytupadre
+Mi PID: 3
+3 yosoytupadre: unknown sys call 23
+getancestor(0) = -1
+3 yosoytupadre: unknown sys call 23
+getancestor(1) = -1
+3 yosoytupadre: unknown sys call 23
+getancestor(2) = -1
+3 yosoytupadre: unknown sys call 23
+getancestor(3) = -1```
+Resolución: Se resolvió tras un reinicio de dispositivo y la adición de la siguiente línea: ``extern struct proc *initproc;`` en /kernel/sysproc.c
