@@ -146,6 +146,13 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  //tarea 2
+
+  p->tickets = 100; //Por defecto son 100 c:
+  if (p->tickets < 1)
+    p-> tickets = 1;
+  p -> run_slices = 0; // veces que ha sido seleccionado por el scheduler
+
   return p;
 }
 
@@ -415,6 +422,18 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
+
+//tarea 2 (modificación a scheduler original)
+
+// Generador simple de números pseudoaleatorios
+static uint next_rand = 1;
+static uint
+my_rand(void)
+{
+  next_rand = next_rand * 1103515245 + 12345;
+  return next_rand;
+}
+
 void
 scheduler(void)
 {
@@ -423,38 +442,64 @@ scheduler(void)
 
   c->proc = 0;
   for(;;){
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting. Then turn them back off
-    // to avoid a possible race between an interrupt
-    // and wfi.
+    // Habilitar interrupciones para evitar deadlocks
     intr_on();
-    intr_off();
 
-    int found = 0;
+    // Calcular el total de tickets de los procesos RUNNABLE
+    int total_tickets = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+        if (p->tickets < 1)
+          p->tickets = 1;
+        total_tickets += p->tickets;
       }
       release(&p->lock);
     }
-    if(found == 0) {
-      // nothing to run; stop running on this core until an interrupt.
+
+    if (total_tickets == 0) {
+      // No hay procesos RUNNABLE, esperar interrupción
       asm volatile("wfi");
+      continue;
+    }
+
+    // Elegir número ganador
+    uint r = (my_rand() % total_tickets) + 1;
+
+    // Seleccionar proceso ganador
+    int acc = 0;
+    struct proc *chosen = 0;
+    for(p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if(p->state == RUNNABLE) {
+        acc += p->tickets;
+        if (acc >= r) {
+          chosen = p;
+          break;
+        }
+      }
+      release(&p->lock);
+    }
+
+    if (chosen != 0) {
+      // Imprimir para debug (puedes comentar esta línea si genera mucho texto)
+      printf("sched: pid %d tickets=%d run_slices=%d r=%d total=%d\n",
+             chosen->pid, chosen->tickets, chosen->run_slices, r, total_tickets);
+
+      // Ejecutar proceso elegido
+      chosen->state = RUNNING;
+      chosen->run_slices++;
+      c->proc = chosen;
+
+      swtch(&c->context, &chosen->context);
+
+      // Cuando vuelve, proceso ya cambió de estado (RUNNABLE, SLEEPING, etc.)
+      c->proc = 0;
+      release(&chosen->lock);
     }
   }
 }
+
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores

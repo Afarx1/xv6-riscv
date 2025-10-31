@@ -128,3 +128,19 @@ sys_getancestor(void)
 
   return ancestor->pid;
 }
+
+//tarea 2
+
+uint64
+sys_settickets(void)
+{
+  int n;
+  argint(0, &n); // Para otbener el argumento n desde espacio de usuario
+
+  struct proc *p = myproc();
+  if (n < 1) n = 1;
+  if (n > 1000000) n = 1000000; // Porsiacaso para evitar overflow
+
+  p-> tickets = n;
+  return p->tickets;
+}
