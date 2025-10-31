@@ -135,7 +135,7 @@ uint64
 sys_settickets(void)
 {
   int n;
-  argint(0, &n); // Para otbener el argumento n desde espacio de usuario
+  argint(0, &n); // Para obtener el argumento n desde espacio de usuario
 
   struct proc *p = myproc();
   if (n < 1) n = 1;

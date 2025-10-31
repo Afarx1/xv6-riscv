@@ -34,3 +34,13 @@ Además, se implementó una función auxiliar para generar números pseudoaleato
 **usys.pl:** Se añadio una linea (entry("settickets")). Esto es lo que le permite al usuario invocar la syscall.
 
 **demo.c:** Este programa se creo para poder probar el funcionamiento del nuevo scheduler. se puede ejecutar llamando a demo dentro de xv6.
+
+# Posibles problemas de este tipo de Scheduler
+
+**Incertidumbre en la asignación de CPU:** Dado que la selección del proceso es aleatoria (aunque ponderada por los tickets), no existe garantía de que cada proceso reciba la fracción esperada de CPU en intervalos cortos
+
+**Starvation:** Un proceso con pocos tickets podría no ser elegido durante mucho tiempo si tiene mala suerte en la lotería, especialmente si otros procesos tienen una cantidad considerablemente mayor de tickets. Cabe mencionar que esto solo sería un problema a corto plazo, ya que al largo plazo el sistema tiende a equilibrarse.
+
+**Complejidad de implementación:** Comparado con Round Robin, Lottery Scheduling requiere manejar generación de números aleatorios, mantenimiento de la suma total de tickets y actualización dinámica de tickets si la prioridad de los procesos varía.
+
+**Inequidad al bloquear procesos:** Si un proceso bloquea frecuentemente, puede desperdiciar sus tickets, afectando a la equidad de prioridad, sin embargo, se pueden implementar mecanismos adicionales como redistribución de tickets para compensar.
