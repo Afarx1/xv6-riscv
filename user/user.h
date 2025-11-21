@@ -25,6 +25,8 @@ int uptime(void);
 int getppid(void);
 int getancestor(int);
 int settickets(int);
+int mrdprotect(void*, int);
+int munrdprotect(void*, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

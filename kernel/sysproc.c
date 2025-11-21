@@ -144,3 +144,31 @@ sys_settickets(void)
   p-> tickets = n;
   return p->tickets;
 }
+
+//tarea 3
+
+uint64
+sys_mrdprotect(void)
+{
+  uint64 addr;
+  int len;
+  
+  // Obtener argumentos (sin verificar retorno)
+  argaddr(0, &addr);
+  argint(1, &len);
+  
+  return mrdprotect(addr, len);
+}
+
+uint64
+sys_munrdprotect(void)
+{
+  uint64 addr;
+  int len;
+  
+  // Obtener argumentos (sin verificar retorno)
+  argaddr(0, &addr);
+  argint(1, &len);
+  
+  return munrdprotect(addr, len);
+}

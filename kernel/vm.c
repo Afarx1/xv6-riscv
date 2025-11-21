@@ -485,3 +485,102 @@ ismapped(pagetable_t pagetable, uint64 va)
   }
   return 0;
 }
+
+
+//tarea 3
+
+int
+mrdprotect(uint64 addr, int len)
+{
+  struct proc *p = myproc();
+  pte_t *pte;
+  uint64 va;
+  
+  // Validaciones
+  if(len <= 0)
+    return -1;
+  
+  // Verificar alineación de página
+  if(addr % PGSIZE != 0)
+    return -1;
+  
+  // Verificar que esté en espacio de usuario
+  if(addr >= MAXVA || addr < 0)
+    return -1;
+  
+  // Recorrer cada página del rango
+  for(int i = 0; i < len; i++) {
+    va = addr + i * PGSIZE;
+    
+    // Verificar que no exceda el tamaño del proceso
+    if(va >= p->sz)
+      return -1;
+    
+    // Obtener el PTE
+    pte = walk(p->pagetable, va, 0);
+    
+    // Validar que el PTE existe y es válido
+    if(pte == 0)
+      return -1;
+    
+    if((*pte & PTE_V) == 0)
+      return -1;
+    
+    // Verificar que es página de usuario
+    if((*pte & PTE_U) == 0)
+      return -1;
+    
+    // Limpiar el bit de lectura (PTE_R)
+    *pte = *pte & ~PTE_R;
+  }
+  
+  return 0;
+}
+
+int
+munrdprotect(uint64 addr, int len)
+{
+  struct proc *p = myproc();
+  pte_t *pte;
+  uint64 va;
+  
+  // Validaciones
+  if(len <= 0)
+    return -1;
+  
+  // Verificar alineación de página
+  if(addr % PGSIZE != 0)
+    return -1;
+  
+  // Verificar que esté en espacio de usuario
+  if(addr >= MAXVA || addr < 0)
+    return -1;
+  
+  // Recorrer cada página del rango
+  for(int i = 0; i < len; i++) {
+    va = addr + i * PGSIZE;
+    
+    // Verificar que no exceda el tamaño del proceso
+    if(va >= p->sz)
+      return -1;
+    
+    // Obtener el PTE
+    pte = walk(p->pagetable, va, 0);
+    
+    // Validar que el PTE existe y es válido
+    if(pte == 0)
+      return -1;
+    
+    if((*pte & PTE_V) == 0)
+      return -1;
+    
+    // Verificar que es página de usuario
+    if((*pte & PTE_U) == 0)
+      return -1;
+    
+    // Restaurar el bit de lectura (PTE_R)
+    *pte = *pte | PTE_R;
+  }
+  
+  return 0;
+}

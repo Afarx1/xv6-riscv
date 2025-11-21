@@ -141,6 +141,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_yosoytupadre\
 	$U/_demo\
+	$U/_rdprotect_test\
 
 
 fs.img: mkfs/mkfs README $(UPROGS)
