@@ -485,3 +485,67 @@ ismapped(pagetable_t pagetable, uint64 va)
   }
   return 0;
 }
+
+//tarea 3
+
+static int
+_valid_user_range(uint64 addr, int len)
+{
+  uint64 a = (uint64)addr;
+  if(len <= 0) return 0;
+  if(a % PGSIZE) return 0;               // must be page-aligned
+  // final address must be < MAXVA (user space)
+  uint64 last = a + (uint64)len * PGSIZE;
+  if(last > MAXVA) return 0;
+  // also ensure start addr is in user space
+  if(a >= MAXVA || a < PGSIZE) return 0;
+  return 1;
+}
+
+// Mark region [addr, addr + len*PGSIZE) as non-readable (clear PTE_R)
+int
+mrdprotect(uint64 addr, int len)
+{
+  struct proc *p = myproc();
+  pagetable_t pagetable = p->pagetable;
+
+  if(! _valid_user_range(addr, len))
+    return -1;
+
+  uint64 a = (uint64)addr;
+  for(int i = 0; i < len; i++){
+    pte_t *pte = walk(pagetable, a, 0);
+    if(pte == 0) return -1;                   // no mapping
+    if(!(*pte & PTE_V)) return -1;            // not valid
+    if(!(*pte & PTE_U)) return -1;            // not user
+    // clear read bit, preserving others
+    *pte = *pte & ~PTE_R;
+    // Ensure any cached translations are invalidated
+    sfence_vma(); // flush TLB (assumes xv6 provides this helper)
+    a += PGSIZE;
+  }
+  return 0;
+}
+
+// Restore read permission (set PTE_R)
+int
+munrdprotect(uint64 addr, int len)
+{
+  struct proc *p = myproc();
+  pagetable_t pagetable = p->pagetable;
+
+  if(! _valid_user_range(addr, len))
+    return -1;
+
+  uint64 a = (uint64)addr;
+  for(int i = 0; i < len; i++){
+    pte_t *pte = walk(pagetable, a, 0);
+    if(pte == 0) return -1;
+    if(!(*pte & PTE_V)) return -1;
+    if(!(*pte & PTE_U)) return -1;
+    *pte = *pte | PTE_R;
+    sfence_vma();
+    a += PGSIZE;
+  }
+  return 0;
+}

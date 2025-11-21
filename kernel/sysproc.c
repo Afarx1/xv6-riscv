@@ -98,3 +98,28 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// tarea 3
+uint64
+sys_mrdprotect(void)
+{
+  uint64 addr;
+  int len;
+
+  argaddr(0, &addr);
+  argint(1, &len);
+
+  return mrdprotect(addr, len);
+}
+
+uint64
+sys_munrdprotect(void)
+{
+  uint64 addr;
+  int len;
+
+  argaddr(0, &addr);
+  argint(1, &len);
+
+  return munrdprotect(addr, len);
+}
